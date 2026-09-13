@@ -1115,7 +1115,7 @@ function exportToPDF() {
         <tbody>${rows}</tbody>
       </table>
       <div class="footer">
-        <div>Документ сформирован автоматически</div>
+        <div>Документ сформировал: <b>${esc(user)}</b></div>
         <div class="sign">Подпись: _______________</div>
       </div>
     </body></html>`);
