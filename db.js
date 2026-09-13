@@ -265,6 +265,62 @@ if (expCount === 0) {
   ];
   db.prepare('INSERT INTO export_settings (id, fields) VALUES (1, ?)').run(JSON.stringify(defaultExport));
 }
+// --- Настройки экспорта ---
+const expCount = db.prepare('SELECT COUNT(*) AS c FROM export_settings').get().c;
+if (expCount === 0) {
+  const defaultExport = [
+    'id', 'serial', 'manufacturer', 'model', 'volume', 'department',
+    'lastCalibration', 'nextCalibration', 'interval', 'daysLeft',
+    'responsible', 'location', 'status', 'cert', 'notes'
+  ];
+  db.prepare('INSERT INTO export_settings (id, fields) VALUES (1, ?)').run(JSON.stringify(defaultExport));
+}
+
+// --- Демо-пипетки ---
+const pipCount = db.prepare('SELECT COUNT(*) AS c FROM pipettes').get().c;
+if (pipCount === 0) {
+  const today = new Date();
+  const ago = function (m) {
+    const d = new Date(today);
+    d.setMonth(d.getMonth() - m);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const insPip = db.prepare(
+    'INSERT INTO pipettes ' +
+    '(id, serial, manufacturer, model, volume, department, subdivision, interval, ' +
+    'last_calibration, cert, last_result, active, responsible, location, notes) ' +
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+
+  insPip.run('P-001', 'EP2024001', 'Eppendorf', 'Research Plus', '1000', 'Гематологический отдел',
+             'Клинико-диагностическая лаборатория', 12, ago(11), 'С-АБ-1234567/2025', 'pass', 1,
+             'Иванова М.С.', 'Лаб. 201, шкаф 3', '');
+  insPip.run('P-002', 'EP2024002', 'Eppendorf', 'Research Plus', '100', 'Биохимический отдел',
+             'Клинико-диагностическая лаборатория', 12, ago(10), 'С-АБ-1234568/2025', 'pass', 1,
+             'Петров А.В.', 'Лаб. 201, шкаф 3', '');
+  insPip.run('P-003', 'GT2023005', 'Gilson', 'Pipetman L', '5000', 'Коагулогический отдел',
+             'Клинико-диагностическая лаборатория', 6, ago(7), 'С-АБ-1234569/2025', 'pass', 1,
+             'Иванова М.С.', 'Лаб. 105', 'Требует внеочередной проверки');
+  insPip.run('P-004', 'BT2022003', 'Biohit', 'mLINE', '200', 'Экспресс отдел',
+             'Экспресс-лаборатория', 12, ago(14), 'С-АБ-9876546/2024', 'pass', 1,
+             'Сидорова Е.К.', 'Лаб. 302', '');
+  insPip.run('P-005', 'TR2024008', 'Thermo', 'Finnpipette F2', '20', 'Серологический отдел',
+             'Микробиологическая лаборатория', 12, ago(2), 'С-АБ-1234570/2025', 'pass', 0,
+             'Петров А.В.', 'Склад', 'В резерве');
+
+  const insHist = db.prepare(
+    'INSERT INTO calibration_history (pipette_id, date, cert, result, org, note) ' +
+    'VALUES (?, ?, ?, ?, ?, ?)'
+  );
+  insHist.run('P-001', ago(23), 'С-АБ-9876543/2024', 'pass', 'ФБУ Красноярский ЦСМ', 'Годна');
+  insHist.run('P-001', ago(11), 'С-АБ-1234567/2025', 'pass', 'ФБУ Красноярский ЦСМ', 'Годна');
+  insHist.run('P-003', ago(13), 'С-АБ-9876545/2024', 'fail', 'ФБУ Красноярский ЦСМ', 'Брак');
+  insHist.run('P-003', ago(7),  'С-АБ-1234569/2025', 'pass', 'ФБУ Красноярский ЦСМ', 'После ремонта');
+}
+
+// --- Подразделения ---
+const subdivCount = db.prepare('SELECT COUNT(*) AS c FROM subdivisions').get().c;
 
   // --- Подразделения (вынесено наружу!) ---
 const subdivCount = db.prepare('SELECT COUNT(*) AS c FROM subdivisions').get().c;
