@@ -191,16 +191,70 @@ if (fieldCount === 0) {
   insField.run('model', 'Модель', 'text', 1, 1, '[]', '', 4);
   insField.run('volume', 'Объём (мкл)', 'text', 0, 1, '[]', '', 5);
   insField.run('department', 'Отдел', 'select', 0, 1, '[]', '', 6);
-  insField.run('interval', 'Межповерочный интервал (мес.)', 'number', 1, 1, '[]', '12', 7);
-  insField.run('lastCalibration', 'Дата последней поверки', 'date', 1, 1, '[]', '', 8);
-  insField.run('cert', 'Номер свидетельства', 'text', 0, 1, '[]', '', 9);
-  insField.run('result', 'Результат поверки', 'select', 0, 1, '["pass","fail","wip"]', 'pass', 10);
-  insField.run('active', 'Статус эксплуатации', 'select', 0, 1, '["true","false"]', 'true', 11);
-  insField.run('responsible', 'Ответственный сотрудник', 'text', 0, 1, '[]', '', 12);
-  insField.run('location', 'Место хранения', 'text', 0, 1, '[]', '', 13);
-  insField.run('notes', 'Примечание', 'textarea', 0, 1, '[]', '', 14);
+  insField.run('subdivision', 'Подразделение', 'select', 0, 1, '[]', '', 7);
+  insField.run('interval', 'Межповерочный интервал (мес.)', 'number', 1, 1, '[]', '12', 8);
+  insField.run('lastCalibration', 'Дата последней поверки', 'date', 1, 1, '[]', '', 9);
+  insField.run('cert', 'Номер свидетельства', 'text', 0, 1, '[]', '', 10);
+  insField.run('result', 'Результат поверки', 'select', 0, 1, '["pass","fail","wip"]', 'pass', 11);
+  insField.run('active', 'Статус эксплуатации', 'select', 0, 1, '["true","false"]', 'true', 12);
+  insField.run('responsible', 'Ответственный сотрудник', 'text', 0, 1, '[]', '', 13);
+  insField.run('location', 'Место хранения', 'text', 0, 1, '[]', '', 14);
+  insField.run('notes', 'Примечание', 'textarea', 0, 1, '[]', '', 15);
 }
 
+// --- Настройки экспорта ---
+const expCount = db.prepare('SELECT COUNT(*) AS c FROM export_settings').get().c;
+if (expCount === 0) {
+  const defaultExport = [
+    'id', 'serial', 'manufacturer', 'model', 'volume', 'department',
+    'lastCalibration', 'nextCalibration', 'interval', 'daysLeft',
+    'responsible', 'location', 'status', 'cert', 'notes'
+  ];
+  db.prepare('INSERT INTO export_settings (id, fields) VALUES (1, ?)').run(JSON.stringify(defaultExport));
+}
+
+// --- Демо-пипетки ---
+const pipCount = db.prepare('SELECT COUNT(*) AS c FROM pipettes').get().c;
+if (pipCount === 0) {
+  const today = new Date();
+  const ago = function (m) {
+    const d = new Date(today);
+    d.setMonth(d.getMonth() - m);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const insPip = db.prepare(
+    'INSERT INTO pipettes ' +
+    '(id, serial, manufacturer, model, volume, department, subdivision, interval, ' +
+    'last_calibration, cert, last_result, active, responsible, location, notes) ' +
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+
+  insPip.run('P-001', 'EP2024001', 'Eppendorf', 'Research Plus', '1000', 'Гематологический отдел',
+             'Клинико-диагностическая лаборатория', 12, ago(11), 'С-АБ-1234567/2025', 'pass', 1,
+             'Иванова М.С.', 'Лаб. 201, шкаф 3', '');
+  insPip.run('P-002', 'EP2024002', 'Eppendorf', 'Research Plus', '100', 'Биохимический отдел',
+             'Клинико-диагностическая лаборатория', 12, ago(10), 'С-АБ-1234568/2025', 'pass', 1,
+             'Петров А.В.', 'Лаб. 201, шкаф 3', '');
+  insPip.run('P-003', 'GT2023005', 'Gilson', 'Pipetman L', '5000', 'Коагулогический отдел',
+             'Клинико-диагностическая лаборатория', 6, ago(7), 'С-АБ-1234569/2025', 'pass', 1,
+             'Иванова М.С.', 'Лаб. 105', 'Требует внеочередной проверки');
+  insPip.run('P-004', 'BT2022003', 'Biohit', 'mLINE', '200', 'Экспресс отдел',
+             'Экспресс-лаборатория', 12, ago(14), 'С-АБ-9876546/2024', 'pass', 1,
+             'Сидорова Е.К.', 'Лаб. 302', '');
+  insPip.run('P-005', 'TR2024008', 'Thermo', 'Finnpipette F2', '20', 'Серологический отдел',
+             'Микробиологическая лаборатория', 12, ago(2), 'С-АБ-1234570/2025', 'pass', 0,
+             'Петров А.В.', 'Склад', 'В резерве');
+
+  const insHist = db.prepare(
+    'INSERT INTO calibration_history (pipette_id, date, cert, result, org, note) ' +
+    'VALUES (?, ?, ?, ?, ?, ?)'
+  );
+  insHist.run('P-001', ago(23), 'С-АБ-9876543/2024', 'pass', 'ФБУ Красноярский ЦСМ', 'Годна');
+  insHist.run('P-001', ago(11), 'С-АБ-1234567/2025', 'pass', 'ФБУ Красноярский ЦСМ', 'Годна');
+  insHist.run('P-003', ago(13), 'С-АБ-9876545/2024', 'fail', 'ФБУ Красноярский ЦСМ', 'Брак');
+  insHist.run('P-003', ago(7),  'С-АБ-1234569/2025', 'pass', 'ФБУ Красноярский ЦСМ', 'После ремонта');
+}
 // --- Настройки экспорта ---
 const expCount = db.prepare('SELECT COUNT(*) AS c FROM export_settings').get().c;
 if (expCount === 0) {
