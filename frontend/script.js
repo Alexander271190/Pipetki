@@ -1099,8 +1099,17 @@ function exportToPDF() {
       .status-warn { color: #ca8a04; font-weight: 600; }
       .status-danger { color: #dc2626; font-weight: 700; }
       .status-inactive { color: #94a3b8; }
-      .footer { margin-top: 15px; font-size: 8pt; color: #94a3b8; display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 8px; }
-      .footer .sign { margin-top: 20px; }
+      .footer {
+  margin-top: 15px;
+  font-size: 8pt;
+  color: #000000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+}
+.footer .sign { margin-top: 0; }
     </style></head><body>
       <h1>🔬 Реестр пипеток — КГБУЗ Краевая клиническая больница КДЛ</h1>
       <div class="meta">Дата: <b>${today}</b> · Записей: <b>${data.length}</b> · Сформировал: <b>${esc(user)}</b></div>
