@@ -1,0 +1,138 @@
+📋 Чек-лист: что осталось исправить
+🟢 Уже исправлено (проверено в коде)
+✅ formatDate — одна функция, дубль убран
+
+✅ showConfirm — синтаксис корректен (... и лишняя } убраны)
+
+✅ generateFormFields — дубли input.id, appendChild убраны
+
+✅ saveQuickCalibration — лишний render() убран, сортировка не сбрасывается
+
+✅ saveBulkReturn — лишний render() убран
+
+✅ impersonateUser / stopImpersonate — сбрасывают myPrefs
+
+✅ _equipmentTypes — загружается из API в loadPipetteData
+
+✅ Форма, таблица, фильтр, экспорт — используют _equipmentTypes
+
+✅ EXPORT_FIELD_MAP.equipmentType — использует _equipmentTypes.find(...)
+
+✅ EXPORT_FIELDS — добавлено поле equipmentType
+
+✅ saveEquipmentTypes — проверка пустого prefix
+
+✅ pipettes.js router.post('/') — читает prefix из БД
+
+✅ settings.js PUT /equipment-types — валидация + нормализация prefix
+
+✅ db.js — generatePipetteId с экранированием, defaultExport с equipmentType
+
+✅ pluralizeType — улучшенная версия на месте
+
+🔴 Обязательно исправить
+1. index.html — опечатка в <title>
+Найди строку:
+
+html
+<title> Клинико-диагностиченская лаборатория </title>
+Замени на:
+
+html
+<title>Клинико-диагностическая лаборатория — учёт оборудования</title>
+Причина: опечатка «диагностиченская» вместо «диагностическая». Видно в закладке браузера и в поисковиках.
+
+🟡 Желательно (косметика, не баг)
+2. pipettes.js — дублирующийся комментарий
+Найди в файле:
+
+js
+// Создание
+// Создание
+router.post('/', authenticate, requirePermission('manage_pipettes'), async (req, res) => {
+Замени на:
+
+js
+// Создание
+router.post('/', authenticate, requirePermission('manage_pipettes'), async (req, res) => {
+Причина: мусор, ни на что не влияет.
+
+3. script.js — отступ в showConfirm
+Найди:
+
+js
+function showConfirm(message, options = {}) {
+    return new Promise(resolve => {
+    _confirmResolver = resolve;
+Замени на:
+
+js
+function showConfirm(message, options = {}) {
+  return new Promise(resolve => {
+    _confirmResolver = resolve;
+Причина: лишние 4 пробела съехали. Работает, но некрасиво.
+
+⚠️ ВАЖНО — если БД уже создана (миграция)
+Если ты уже запускал систему раньше, то в таблице export_settings уже сохранён старый список полей (без equipmentType). Изменения в db.js → seedInitialData применятся только при первом создании БД.
+
+Что сделать
+Вариант А. Через MySQL:
+
+bash
+docker exec -it pipette_db mysql -upipette -ppipette_secret pipette -e "DELETE FROM export_settings WHERE id = 1;"
+docker-compose restart app
+Вариант Б. Через UI:
+
+Войти как admin
+
+«Настройки → Экспорт»
+
+Вручную отметить чекбокс «Тип оборудования»
+
+Сохранить
+
+Причина: без этого в настройках экспорта не будет пункта «Тип оборудования», и в CSV/PDF не получится выгрузить эту колонку.
+
+🧪 Проверочный сценарий после правок
+Запуск
+□ docker-compose restart app
+□ F12 → Console — без SyntaxError, is not defined
+□ Вход admin/admin работает
+Типы оборудования (главная фича)
+□ «Настройки → Система → Типы оборудования» — таблица с 5 типами
+□ «➕ Добавить тип» → ph_meter, label pH-метр, icon 🧪, prefix PH → сохранить
+□ F5 → тип сохранён
+□ «Добавить оборудование» → в селекте есть 🧪 pH-метр
+□ Поля ID в форме НЕТ ⚠️
+□ Заполнить и сохранить → ID = PH-001
+□ Вторая запись → PH-002
+□ Обычная пипетка → P-004
+Экспорт
+□ «Настройки → Экспорт» — есть пункт «Тип оборудования»
+□ Включить, сохранить
+□ CSV → колонка «Тип» содержит pH-метр, Пипетка
+□ PDF → то же самое
+Поверки
+□ Отправить на поверку → статус «📦 На поверке»
+□ «✔️ Быстрая поверка» → сортировка не сбрасывается
+□ «📥 Вернулись с поверки» → статус корректный
+Пользователи
+□ «🔍 Войти как» → модалка закрывается
+□ «⬅️ Вернуться» → возврат к админу
+📊 Итоговая таблица
+№	Файл	Что	Приоритет
+1	index.html	Опечатка в <title>	🔴 Обязательно
+2	pipettes.js	Дубль // Создание	🟡 Косметика
+3	script.js	Отступ в showConfirm	🟡 Косметика
+4	БД (миграция)	DELETE FROM export_settings WHERE id = 1	⚠️ Если БД уже была
+🎯 Короткий итог
+Критических багов нет. Проект рабочий. Осталось:
+
+Обязательно: исправить опечатку в <title> (index.html)
+
+Если БД уже создана: сбросить export_settings — иначе в настройках экспорта не появится «Тип оборудования»
+
+Косметика: убрать дубль-комментарий и поправить отступ
+
+После этих правок + перезапуска — система полностью рабочая.
+
