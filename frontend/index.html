@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Краевая клиническая больница клинико- диагностиченская лаборатория </title>
+  <title>Краевая клиническая больница клинико-диагностическая лаборатория</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -20,11 +19,11 @@
       <form class="auth-form" id="login-form" onsubmit="loginUser(event)">
         <div class="form-group">
           <label>Логин</label>
-          <input type="text" id="login-username" placeholder="Введите логин" required>
+          <input type="text" id="login-username" placeholder="Введите логин">
         </div>
         <div class="form-group">
           <label>Пароль</label>
-          <input type="password" id="login-password" placeholder="Введите пароль" required>
+          <input type="password" id="login-password" placeholder="Введите пароль">
         </div>
         <div id="login-error" class="auth-error"></div>
         <button type="submit" class="btn btn-primary">
@@ -124,7 +123,7 @@
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <h2 id="modal-title">Добавить пипетку</h2>
-    <form id="pipette-form" onsubmit="savePipette(event)">
+    <form id="pipette-form" onsubmit="savePipette(event)" novalidate>
       <input type="hidden" id="edit-id">
       <div id="form-fields-container"></div>
       <div class="form-actions">
@@ -144,7 +143,7 @@
       <div class="form-row">
         <div class="form-group">
           <label>Дата поверки *</label>
-          <input type="date" id="quick-cal-date" required>
+          <input type="date" id="quick-cal-date">
         </div>
         <div class="form-group">
           <label>Номер свидетельства</label>
@@ -190,7 +189,7 @@
       <div class="form-row">
         <div class="form-group">
           <label>Дата поверки *</label>
-          <input type="date" id="cal-date" required>
+          <input type="date" id="cal-date">
         </div>
         <div class="form-group">
           <label>Номер свидетельства</label>
