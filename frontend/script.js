@@ -140,9 +140,15 @@ async function loginUser(e) {
   errorEl.textContent = '';
 
   if (!username || !password) {
-    errorEl.textContent = 'Заполните все поля';
-    return;
-  }
+  const missing = [];
+  if (!username) missing.push('Логин');
+  if (!password) missing.push('Пароль');
+  
+  errorEl.textContent = missing.length === 1
+    ? `Заполните поле «${missing[0]}»`
+    : `Заполните поля: ${missing.map(m => `«${m}»`).join(', ')}`;
+  return;
+}
 
   try {
     const result = await apiRequest('/auth/login', 'POST', { login: username, password });
@@ -803,22 +809,39 @@ async function savePipette(e) {
   let valid = true;
 
   const inputs = container.querySelectorAll('input, select, textarea');
-  inputs.forEach(el => {
-    const fieldId = el.dataset.fieldId;
-    if (!fieldId) return;
+const missing = [];   // ← список незаполненных полей
 
-    let value = el.value;
-    data[fieldId] = value;
+inputs.forEach(el => {
+  const fieldId = el.dataset.fieldId;
+  if (!fieldId) return;
 
-    if (el.required && !value) {
-      valid = false;
-      el.style.borderColor = '#dc2626';
-    } else {
-      el.style.borderColor = '';
-    }
-  });
+  let value = el.value;
+  data[fieldId] = value;
 
-  if (!valid) { showToast('Заполните обязательные поля', 'error'); return; }
+  if (el.required && !value) {
+    valid = false;
+    el.style.borderColor = '#dc2626';
+    
+    // Запоминаем название поля — берём из label
+    const labelEl = el.previousElementSibling;   // label идёт перед input
+    const label = labelEl ? labelEl.textContent.replace(' *', '').trim() : fieldId;
+    missing.push(label);
+  } else {
+    el.style.borderColor = '';
+  }
+});
+
+if (!valid) {
+  // Формируем сообщение с перечислением полей
+  let msg;
+  if (missing.length === 1) {
+    msg = `Заполните поле «${missing[0]}»`;
+  } else {
+    msg = `Заполните поля: ${missing.map(m => `«${m}»`).join(', ')}`;
+  }
+  showToast(msg, 'error');
+  return;
+}
 
   if (data.interval) data.interval = parseInt(data.interval) || 12;
   if (data.active !== undefined) {
@@ -888,7 +911,7 @@ async function saveQuickCalibration() {
   const org = document.getElementById('quick-cal-org').value.trim();
   const note = document.getElementById('quick-cal-note').value.trim();
 
-  if (!date) { showToast('Укажите дату поверки', 'error'); return; }
+  if (!date) { showToast('Заполните поле «Дата поверки»', 'error'); return; }
   if (date > new Date().toISOString().slice(0, 10)) { showToast('Дата не может быть в будущем', 'error'); return; }
 
   try {
@@ -994,7 +1017,7 @@ async function addCalibrationRecord() {
   const org = document.getElementById('cal-org').value.trim();
   const note = document.getElementById('cal-note').value.trim();
 
-  if (!date) { showToast('Укажите дату поверки', 'error'); return; }
+  if (!date) { showToast('Заполните поле «Дата поверки»', 'error'); return; }
   if (date > new Date().toISOString().slice(0, 10)) { showToast('Дата не может быть в будущем', 'error'); return; }
 
   try {
@@ -1545,7 +1568,7 @@ async function renderDepartmentsSettings() {
 
 function addDepartmentItem() {
   const name = document.getElementById('new-dept-name').value.trim();
-  if (!name) { showToast('Введите название', 'error'); return; }
+  if (!name) { showToast('Заполните поле «Название отдела»', 'error'); return; }
   if (_cachedDepartmentsFull.some(d => d.name === name)) { showToast('Уже есть', 'error'); return; }
   _cachedDepartmentsFull.push({ name, enabled: true });
   renderDepartmentsSettings();
@@ -1618,7 +1641,7 @@ async function renderSubdivisionsSettings() {
 
 function addSubdivision() {
   const name = document.getElementById('new-subdivision-name').value.trim();
-  if (!name) { showToast('Введите название', 'error'); return; }
+  if (!name) { showToast('Заполните поле «Название подразделения»', 'error'); return; }
   if (_cachedSubdivisions.some(s => s.name === name)) { showToast('Уже есть', 'error'); return; }
   _cachedSubdivisions.push({ name, enabled: true });
   renderSubdivisionsSettings();
@@ -1957,8 +1980,26 @@ async function saveUserSetting() {
   const department = document.getElementById('usr-department').value.trim();
   const role = document.getElementById('usr-role').value;
 
-  if (!login || !fullName || !position) { showToast('Заполните поля', 'error'); return; }
-  if (!id && !password) { showToast('Укажите пароль для нового пользователя', 'error'); return; }
+  // Проверка обязательных полей с перечислением
+  const missing = [];
+  if (!login) missing.push('Логин');
+  if (!fullName) missing.push('ФИО');
+  if (!position) missing.push('Должность');
+  
+  if (missing.length > 0) {
+    const msg = missing.length === 1
+      ? `Заполните поле «${missing[0]}»`
+      : `Заполните поля: ${missing.map(m => `«${m}»`).join(', ')}`;
+    showToast(msg, 'error');
+    return;
+  }
+  
+  // Пароль обязателен только для нового пользователя
+  if (!id && !password) { 
+    showToast('Заполните поле «Пароль»', 'error'); 
+    return; 
+  }
+  
   const onlyOwnCb = document.getElementById('usr-only-own-dept');
   const onlyOwnDepartment = onlyOwnCb ? onlyOwnCb.checked : false;
   
